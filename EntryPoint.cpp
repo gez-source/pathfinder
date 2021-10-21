@@ -6,6 +6,7 @@
 #include "Vector3.h"
 #include "PathNode.h"
 #include "PriorityQueue.h"
+#include "FibonacciHeap.h"
 
 #include <unordered_set>
 #include <map>
@@ -51,7 +52,7 @@ public:
         int y = point.y;
         int z = point.z;
 
-        if ((x < 0 || x > width - 1) || (z < 0 || z > height -1))
+        if ((x < 0 || x > width) || (z < 0 || z > height))
         {
             return;
         }
@@ -65,7 +66,7 @@ public:
     {
         for (int y = 0; y <= height; y++)
         {
-            for (int x = 0; x <= width; x++)
+            for (int x = 0; x < width; x++)
             {
                 int index = x + (width * y);
 
@@ -131,10 +132,10 @@ bool Contains(std::unordered_set<std::string>* unorderedSet, std::string itemInp
 float HeuristicCostEstimate(PathNode* n, Vector3 startNode, Vector3 goal)
 {
     float collisionWeight = 0;
-    //if (currentLevel->HasCollision(n->x, n->y, n->z))
-    //{
-    //    collisionWeight = 100000000;
-    //}
+    if (currentLevel->HasCollision(n->x, n->y, n->z))
+    {
+        collisionWeight = 100000000;
+    }
     return collisionWeight +
         Vector3::ManhattanDistance(n->Position, goal);
         //Vector3::Distance(n->Position, goal);
@@ -209,10 +210,10 @@ std::vector<PathNode*>* AdjacencyList(int x, int y, int z)
     //  . [.] .
 
     // CORNERS.
-    adj->push_back(CreateNode(x + 1, y, z + 1));
-    adj->push_back(CreateNode(x - 1, y, z + 1));
-    adj->push_back(CreateNode(x + 1, y, z - 1));
-    adj->push_back(CreateNode(x - 1, y, z - 1));
+    //adj->push_back(CreateNode(x + 1, y, z + 1));
+    //adj->push_back(CreateNode(x - 1, y, z + 1));
+    //adj->push_back(CreateNode(x + 1, y, z - 1));
+    //adj->push_back(CreateNode(x - 1, y, z - 1));
     // [.].[.]
     //  . . .
     // [.].[.] 
@@ -252,7 +253,7 @@ std::vector<PathNode*>* AdjacencyList(PathNode* n)
     return AdjacencyList(n->x, n->y, n->z);
 }
 
-void EnqueueAdjacent(Vector3 startPosition, Vector3 goalPosition, PathNode* current, std::vector<PathNode*>*& neighbours, PriorityQueue* priorityQueue)
+void EnqueueAdjacent(Vector3 startPosition, Vector3 goalPosition, PathNode* current, std::vector<PathNode*>*& neighbours, FibonacciHeap<float>* priorityQueue)
 {
     int i;
     PathNode* child;
@@ -261,6 +262,8 @@ void EnqueueAdjacent(Vector3 startPosition, Vector3 goalPosition, PathNode* curr
     // NAVIGATING
     // priorityQueue automatically removes item from queue when it is dequed
     //openSet.Remove(current);
+    //priorityQueue->Extract_min();
+
     closedSet->insert(current->Index);
 
     // Get each neighbour proximal to the current node.
@@ -270,7 +273,7 @@ void EnqueueAdjacent(Vector3 startPosition, Vector3 goalPosition, PathNode* curr
     {
         child = (*neighbours)[i];
 
-        if (!Contains(closedSet, child->Index) && !child->IsSolid) // !closedSet.Contains(child->Index))
+        if (!Contains(closedSet, child->Index))// && !child->IsSolid) // !closedSet.Contains(child->Index))
         {
             // Node has not already been visited.
 
@@ -353,7 +356,9 @@ ShortestPathResult* AddSolution(PathNode* current)
 /// </returns>
 std::vector<Vector3>* FindShortestPath(Vector3 startPosition, Vector3 goalPosition, std::vector<PathNode*>*& shortestNodes)
 {
-    PriorityQueue* priorityQueue = new PriorityQueue();
+    FibonacciHeap<float>* priorityQueue = new FibonacciHeap<float>();
+    //PriorityQueue* priorityQueue = new PriorityQueue();
+
     std::vector<Vector3>* path = nullptr; // A set of points representing the shortest path to follow. Eventually will contain the most efficient path, and by default there's no solution.
     PathNode* current;
     int i;
@@ -402,13 +407,22 @@ std::vector<Vector3>* FindShortestPath(Vector3 startPosition, Vector3 goalPositi
 
     }
 
+    delete priorityQueue;
+
     return path;
 }
 
+int randInt(int min, int max)
+{
+    int random = rand() % max + min;
+    return random;
+}
 
 int main()
 {
 	std::cout << "Pathfinder by Gerallt Franke" << std::endl;
+
+    srand(time(NULL));  //Changed from rand(). srand() seeds rand for you.
 
     std::string g = 
         "@@@@@@@@@@@@@@@ @@@@@@@@@@@@@@@"
@@ -437,8 +451,10 @@ int main()
     Level* level = new Level(g, 31, 22);
     currentLevel = level;
 
-    Vector3 startPosition = Vector3(15, 0, 21);
-    Vector3 goalPosition = Vector3(14, 0, 1);
+    //Vector3 startPosition = Vector3(15, 0, 22);
+    //Vector3 goalPosition = Vector3(15, 0, 0);
+    Vector3 startPosition = Vector3(randInt(0, 31), 0, randInt(0, 22));
+    Vector3 goalPosition = Vector3(randInt(0, 31), 0, randInt(0, 22));
 
     std::vector<PathNode*>* pathNodes;
     std::vector<Vector3>* pathPoints;

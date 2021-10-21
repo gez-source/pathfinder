@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FibonacciHeap.h" />
     <ClInclude Include="PathNode.h" />
     <ClInclude Include="PriorityQueue.h" />
     <ClInclude Include="Vector3.h" />
